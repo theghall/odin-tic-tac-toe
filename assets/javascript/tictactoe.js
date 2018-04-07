@@ -1,5 +1,6 @@
 "use strict";
 
+// With these two objects you can make a tic-tac-toe player
 const player = (name) => {
 	const getName = () =>  { return name; }
 	return { getName };
@@ -11,6 +12,11 @@ const token = (token) => {
 	return { getToken, setToken };
 }
 
+// This object stores the state of a tic-tac-toe game.
+// After setting the players, every time you call setSquare,
+// every aspect of the game state is updated. The inactive player
+// becomes the active player, the board is updated, a win or draw is 
+// determined, and a status string is set.
 const gameState = () => {
 	let board = ['','','','','','','','',''];
 	let currPlayer = null;
@@ -18,8 +24,9 @@ const gameState = () => {
 	let numMoves = 0;
 	let winner = false;
 	let draw = false;
-	let status = '';
+	let gameStatus = '';
 
+	// Win or draw functions
 	function hasThree(line) {
 		line = line.join('');
 		return (line === "XXX" || line === "OOO");
@@ -65,6 +72,26 @@ const gameState = () => {
 		return diagWin;
 	}
 
+	function checkForWin() {
+		winner = (vertWin() || horizWin() || diagWin());
+		if (winner) gameStatus = getCurrPlayer().getName() + " is the winner!";
+	}
+
+	const isWinner = () => {
+		return winner;
+	}
+
+	function checkForDraw() {
+		draw = (numMoves === 9);
+		if (draw) gameStatus = "The game is a draw.";
+	}
+
+	const isDraw = () => {
+		return draw;
+	}
+
+	// Players moves
+	// A players move updates the entire state of the game
 	const setSquare = (square, token) => {
 		board[square] = token;
 		numMoves++;
@@ -73,9 +100,18 @@ const gameState = () => {
 		if (!isWinner() && !isDraw()) switchPlayers();
 	}
 
+	const validMove = (square) => {
+		return (board[square] === '');
+    }
+
+	const getStatus = () => {
+		return gameStatus;
+	}
+
+	// Player info and status
 	function setCurrPlayer(player) {
 		currPlayer = player;
-		status = currPlayer.getName() + ", your turn.";
+		gameStatus = currPlayer.getName() + ", your turn.";
 	}
 
 	const getCurrPlayer = () => {
@@ -91,10 +127,6 @@ const gameState = () => {
 		return players;
 	}
 
-	const validMove = (square) => {
-		return (board[square] === '');
-    }
-
 	function switchPlayers() {
 		if (getCurrPlayer() === players[0]) {
 			setCurrPlayer(players[1]);
@@ -103,28 +135,8 @@ const gameState = () => {
 		}
 	}
 
-	function checkForWin() {
-		winner = (vertWin() || horizWin() || diagWin());
-		if (winner) status = getCurrPlayer().getName() + " is the winner!";
-	}
 
-	const isWinner = () => {
-		return winner;
-	}
-
-	function checkForDraw() {
-		draw = (numMoves === 9);
-		if (draw) status = "The game is a draw.";
-	}
-
-	const isDraw = () => {
-		return draw;
-	}
-
-	const getStatus = () => {
-		return status;
-	}
-
+	// New games
 	const reset = () => {
 		for (let i = 0; i < 9; i++) { board[i] = ''; }
 		numMoves = 0;
@@ -143,10 +155,13 @@ const gameState = () => {
 		setCurrPlayer(players[0]);
 	}
 
+	// Public methods
 	return {setSquare, setPlayers, getCurrPlayer, getPlayers, validMove,
 		isWinner, isDraw, reset, getStatus, swapPlayers };
 }
 
+// This interfaces with the HTML page which displays the board, a legend,
+// a status, and buttons for resetting the game
 const boardDisplayController = (function() {
 	const getSquareIds = () => {
 		return (['s1', 's2', 's3', 's4', 's5', 's6', 's7', 's8', 's9']);
@@ -160,10 +175,10 @@ const boardDisplayController = (function() {
 		p2Element.innerText = players[1].getToken() + ': ' + players[1].getName();
 	}
 
-	const displayStatus = (status) => {
+	const displayStatus = (gameStatus) => {
 		const statusElement = document.getElementById('status');
 
-		statusElement.innerText = status;
+		statusElement.innerText = gameStatus;
 	}
 
 	const placeToken = (elem, token) => {
@@ -196,51 +211,9 @@ const boardDisplayController = (function() {
 		getSquareIds }
 })();
 
-function getPlayers() {
-
-	const players = [];
-
-	const p1Name = prompt("Player One, enter your name: ");
-	const p2Name = prompt("Player Two, enter your name: ");
-
-	const p1 = player(p1Name);
-	const p2 = player(p2Name);
-
-	const tokenX = token('X');
-	const tokenO = token('O');
-
-	players.push(Object.assign({},p1,tokenX));
-	players.push( Object.assign({},p2,tokenO));
-
-	return players;
-}
-
-function getSquare(id) {
-	const idNum = id.slice(1);
-
-	return(idNum -1);
-}
-
-function gameController(gameState, e) {
-	if (!gameState.isWinner() && !gameState.isDraw()) {
-		const square = getSquare(e.target.id);
-
-		if (gameState.validMove(square)) {
-			boardDisplayController.placeToken(e.target, gameState.getCurrPlayer().getToken());
-			gameState.setSquare(square, gameState.getCurrPlayer().getToken());
-
-			if (gameState.isWinner()) {
-				boardDisplayController.toggleButtons();
-			}  else if (gameState.isDraw()) {
-				boardDisplayController.toggleButtons();
-			}
-			boardDisplayController.displayStatus(gameState.getStatus());
-		} else {
-			alert("Choose an empty space.");
-		}
-	}
-}
-
+// Event listeners
+//
+// Shows a user what square they are on
 function toggleSquareBackground(e) {
 	const elem = e.target;
 	const classList = elem.classList;
@@ -253,6 +226,7 @@ function toggleSquareBackground(e) {
 	}
 }
 
+// Shows a user which button they will click
 function toggleBtnBackground(e) {
 	const elem = e.target;
 	const classList = elem.classList;
@@ -265,6 +239,8 @@ function toggleBtnBackground(e) {
 	}
 }
 
+// Each square gets a listen event for updating game state as well
+// as showing which square they are on
 function setSquareListeners(gameState) {
 	const squares = boardDisplayController.getSquareIds();
 
@@ -276,6 +252,9 @@ function setSquareListeners(gameState) {
 	}
 }
 
+// Button listener functions
+//
+// Will update game state and page if players decide to swap sides
 function switchPlayers(gameState, e) {
 	e.preventDefault();
 	gameState.swapPlayers();
@@ -286,6 +265,7 @@ function switchPlayers(gameState, e) {
 	boardDisplayController.displayStatus(gameState.getStatus());
 }
 
+// Will update game state and page if players decide to play again
 function replayGame(gameState, e) {
 	e.preventDefault();
 	gameState.reset();
@@ -305,6 +285,53 @@ function setButtonListeners(gameState) {
 	replayBtn.addEventListener('click', function(e) { replayGame(gameState, e) });
 	replayBtn.addEventListener('mouseover', toggleBtnBackground);
 	replayBtn.addEventListener('mouseout', toggleBtnBackground);
+}
+
+// Main event handler, when a user clicks a square, the gameState
+// is updated via setSquare.  This event handler checks for a win
+// or draw condition and sets the state of the page appropiately
+function gameController(gameState, e) {
+	if (!gameState.isWinner() && !gameState.isDraw()) {
+		const square = getSquare(e.target.id);
+
+		if (gameState.validMove(square)) {
+			boardDisplayController.placeToken(e.target, gameState.getCurrPlayer().getToken());
+			gameState.setSquare(square, gameState.getCurrPlayer().getToken());
+
+			if (gameState.isWinner() || gameState.isDraw()) {
+				boardDisplayController.toggleButtons();
+			}
+			boardDisplayController.displayStatus(gameState.getStatus());
+		} else {
+			alert("Choose an empty space.");
+		}
+	}
+}
+
+function getSquare(id) {
+	const idNum = id.slice(1);
+
+	return(idNum -1);
+}
+
+// Gets the players for this game
+function getPlayers() {
+
+	const players = [];
+
+	const p1Name = prompt("Player One, enter your name: ");
+	const p2Name = prompt("Player Two, enter your name: ");
+
+	const p1 = player(p1Name);
+	const p2 = player(p2Name);
+
+	const tokenX = token('X');
+	const tokenO = token('O');
+
+	players.push(Object.assign({},p1,tokenX));
+	players.push( Object.assign({},p2,tokenO));
+
+	return players;
 }
 
 function ready() {
