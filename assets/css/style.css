@@ -30,6 +30,26 @@ body {
   line-height: 50px;
 }
 
+.highlight-square {
+ background-color: lightgrey;
+}
+
+#game-btns {
+  margin: 0;
+  margin-left: 38.5%;
+}
+
+.btn {
+  background-color: lightgrey;
+  width: 100px;
+  height: 35px;
+  border-radius: 5px;
+}
+
+.highlight-btn {
+  background-color: darkgrey;
+}
+
 /* Game status & info */
 #legend {
  float: left;
